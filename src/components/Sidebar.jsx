@@ -158,7 +158,7 @@ const Sidebar = ({
         >
           {isSidebarOpen ? <PanelLeftClose /> : <PanelLeftOpen />}
         </button>
-      </div>
+      </aside>
 
       {/* Actions */}
       <div className="flex flex-col gap-3 p-4">
@@ -230,7 +230,7 @@ const Sidebar = ({
           {isSidebarOpen && "Logout"}
         </button>
       </div>
-    </aside>
+    </>
   );
 };
 
