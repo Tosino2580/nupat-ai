@@ -1,25 +1,12 @@
 /**
-    * @description      : 
-    * @author           : fortu
-    * @group            : 
-    * @created          : 22/11/2025 - 16:36:33
-    * 
-    * MODIFICATION LOG
-    * - Version         : 1.0.0
-    * - Date            : 22/11/2025
-    * - Author          : fortu
-    * - Modification    : 
-**/
-/**
  * MainPage (clean, uses Sidebar + SearchModal)
  */
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Code, Sparkles, Wand2, Eye } from "lucide-react";
+import { Sparkles, Eye } from "lucide-react";
 import Sidebar from "./Sidebar";
 import SearchModal from "./SearchModal";
 import SettingsModal from "./SettingsModal";
-
 
 const STORAGE_KEY = "nonaai_chat_history_v1";
 
@@ -32,8 +19,6 @@ const MainPage = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-
-  // persisted chat history
   const [chatHistory, setChatHistory] = useState(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -47,7 +32,6 @@ const MainPage = () => {
   const [isResizing, setIsResizing] = useState(false);
   const [previewMode, setPreviewMode] = useState("preview");
 
-  // helpers
   const persistHistory = (next) => {
     setChatHistory(next);
     try {
@@ -65,7 +49,6 @@ const MainPage = () => {
   };
 
   const handleNewChat = () => {
-    // If there's content, save it as a history item
     if (prompt.trim() || generatedSite) {
       const id = Date.now().toString();
       const item = {
@@ -75,58 +58,20 @@ const MainPage = () => {
         generatedSite,
         ts: Date.now(),
       };
-      const next = [item, ...chatHistory].slice(0, 100); // cap
+      const next = [item, ...chatHistory].slice(0, 100);
       persistHistory(next);
     }
-    // reset editor
     setPrompt("");
     setGeneratedSite("");
     setShowPreview(false);
   };
 
-  const handleEnhancePrompt = () => {
-    if (!prompt.trim()) return;
-    setIsGenerating(true);
-    setTimeout(() => {
-      setPrompt((prev) => `Enhance: ${prev}`);
-      setIsGenerating(false);
-    }, 900);
-  };
-
-  const handleGenerate = () => {
-    if (!prompt.trim()) return;
-    setIsGenerating(true);
-    setShowPreview(true);
-
-    // fake generation
-    setTimeout(() => {
-      const html = `<html><body><h1>Result</h1><p>${prompt}</p></body></html>`;
-      setGeneratedSite(html);
-
-      // auto-save to history as final item
-      const id = Date.now().toString();
-      const item = {
-        id,
-        summary: summarize(prompt),
-        prompt,
-        generatedSite: html,
-        ts: Date.now(),
-      };
-      const next = [item, ...chatHistory].slice(0, 100);
-      persistHistory(next);
-
-      setIsGenerating(false);
-    }, 1100);
-  };
-
-  // handle selecting a history item (loads prompt + preview)
   const handleSelectHistory = (item) => {
     setPrompt(item.prompt || "");
     setGeneratedSite(item.generatedSite || "");
     setShowPreview(Boolean(item.generatedSite));
   };
 
-  // resizer
   const handleMouseDown = (e) => {
     e.preventDefault();
     setIsResizing(true);
@@ -150,69 +95,80 @@ const MainPage = () => {
     };
   }, [isResizing]);
 
-  // derived for quick UI
   const latestSummary = useMemo(() => (chatHistory[0] ? chatHistory[0].summary : ""), [chatHistory]);
 
-  // logout
   const handleLogout = () => {
     localStorage.removeItem("userToken");
-    // optionally clear history? we keep it
     window.location.reload();
+  };
+
+  const handleSend = (e) => {
+    e?.preventDefault();
+    if (!prompt.trim()) return;
+
+    setIsGenerating(true);
+    setShowPreview(true);
+
+    setTimeout(() => {
+      const html = `<html><body><h1>Result</h1><p>${prompt}</p></body></html>`;
+      setGeneratedSite(html);
+
+      const id = Date.now().toString();
+      const item = {
+        id,
+        summary: summarize(prompt),
+        prompt,
+        generatedSite: html,
+        ts: Date.now(),
+      };
+      const next = [item, ...chatHistory].slice(0, 100);
+      persistHistory(next);
+
+      setPrompt("");
+      setIsGenerating(false);
+    }, 1100);
   };
 
   return (
     <div className="min-h-screen flex bg-black font-montserrat">
-          <Sidebar
-  isSidebarOpen={isSidebarOpen}
-  setIsSidebarOpen={setIsSidebarOpen}
-  chatHistory={chatHistory}
-  onNewChat={handleNewChat}
-  onOpenSearch={() => setIsSearchOpen(true)}
-  onSelectHistory={handleSelectHistory}
-  onOpenSettings={() => setIsSettingsOpen(true)}
-  onLogout={handleLogout}
-/>
-
+      <Sidebar
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+        chatHistory={chatHistory}
+        onNewChat={handleNewChat}
+        onOpenSearch={() => setIsSearchOpen(true)}
+        onSelectHistory={handleSelectHistory}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onLogout={handleLogout}
+      />
 
       <div className="relative flex flex-1">
-
-
-         <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 z-0">
           <div className="bg-grid-pattern absolute inset-0 opacity-20"></div>
-          <div className="animate-blob absolute left-0 top-0 h-96 w-30  md:w-96 rounded-full bg-blue-700/40 blur-3xl"></div>
+          <div className="animate-blob absolute left-0 top-0 h-96 w-30 md:w-96 rounded-full bg-blue-700/40 blur-3xl"></div>
           <div className="animate-blob animation-delay-2000 absolute right-0 top-1/2 h-30 md:h-96 w-30 md:w-96 rounded-full bg-blue-500/40 blur-3xl"></div>
           <div className="animate-blob animation-delay-4000 absolute bottom-0 left-1/4 h-96 w-30 md:w-96 rounded-full bg-blue-400/40 blur-3xl"></div>
         </div>
 
-        {/* Mobile Toggle Button - ChatGPT style */}
         <button
-          className="md:hidden fixed top-4 left-4 z-50 rounded-lg  text-white shadow-lg"
+          className="md:hidden fixed top-4 left-4 z-50 rounded-lg text-white shadow-lg"
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        >
-          
-        </button>
+        ></button>
 
-        {/* Main content shifts when sidebar expands (desktop) */}
         <div
           className={`flex flex-1 flex-col transition-all duration-300`}
-          style={{
-            marginLeft: isSidebarOpen ? "0" : "0",
-          }}
+          style={{ marginLeft: isSidebarOpen ? "0" : "0" }}
         >
-          {/* MAIN AREA */}
           <div
             className="relative z-10 flex flex-col p-6 md:p-10 mt-30 md:mt-0 transition-all duration-300"
             style={{ width: showPreview ? `calc(100% - ${previewWidth}px)` : "100%" }}
           >
             <div className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center">
-
               {/* Header */}
               <div className="mb-10 text-center">
                 <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-600/20 bg-blue-600/10 px-3 py-1">
                   <Sparkles className="h-4 w-4 text-blue-400" />
-                  <span className="text-xs md:text-sm font-medium text-blue-300">
-                    AI Assistant
-                  </span>
+                  <span className="text-xs md:text-sm font-medium text-blue-300">NupatAI</span>
                 </div>
 
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-3">
@@ -227,30 +183,29 @@ const MainPage = () => {
                 </p>
               </div>
 
-              {/* Textarea */}
-              <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                className="h-28 w-full rounded-xl border border-gray-700 bg-gray-900 p-4 text-white resize-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Ask anything…"
-              />
-
-              {/* Buttons */}
-              <div className="mt-4 flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={handleEnhancePrompt}
-                  disabled={!prompt.trim() || isGenerating}
-                  className="flex-1 rounded-xl bg-gray-800 text-gray-300 p-3 hover:bg-gray-700 disabled:opacity-50"
-                >
-                  {isGenerating ? "..." : "Enhance"}
-                </button>
+              {/* Textarea with Telegram-style Send Button */}
+              <div className="relative mt-4 w-full max-w-xl mx-auto">
+                <textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend(e)}
+                  className="h-28 w-full rounded-xl border border-gray-700 bg-gray-900 p-4 pr-14 text-white resize-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Ask anything…"
+                />
 
                 <button
-                  onClick={handleGenerate}
+                  onClick={handleSend}
                   disabled={!prompt.trim() || isGenerating}
-                  className="flex-1 rounded-xl bg-blue-600 text-white p-3 hover:bg-blue-500 disabled:opacity-50"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-blue-600 hover:bg-blue-500 rounded-full p-3 flex items-center justify-center disabled:opacity-50 transition"
                 >
-                  {isGenerating ? "..." : "Generate"}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-white"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                  </svg>
                 </button>
               </div>
 
@@ -262,7 +217,6 @@ const MainPage = () => {
             </div>
           </div>
 
-          {/* Resize Handle */}
           {showPreview && (
             <div
               onMouseDown={handleMouseDown}
@@ -270,7 +224,6 @@ const MainPage = () => {
             ></div>
           )}
 
-          {/* Preview Panel */}
           {showPreview && (
             <div
               className="hidden md:flex flex-col bg-gray-900 border-l border-gray-700"
@@ -279,18 +232,14 @@ const MainPage = () => {
               <div className="flex items-center justify-between border-b border-gray-700 p-3">
                 <button
                   onClick={() => setPreviewMode("preview")}
-                  className={`px-2 py-1 rounded-md text-sm ${previewMode === "preview"
-                      ? "bg-blue-600 text-white"
-                      : "text-gray-400 hover:bg-gray-800"
-                    }`}
+                  className={`px-2 py-1 rounded-md text-sm ${
+                    previewMode === "preview" ? "bg-blue-600 text-white" : "text-gray-400 hover:bg-gray-800"
+                  }`}
                 >
                   <Eye className="inline h-4 w-4 mr-1" /> Preview
                 </button>
 
-                <button
-                  className="text-xl text-gray-400 hover:text-white"
-                  onClick={() => setShowPreview(false)}
-                >
+                <button className="text-xl text-gray-400 hover:text-white" onClick={() => setShowPreview(false)}>
                   ×
                 </button>
               </div>
@@ -311,19 +260,14 @@ const MainPage = () => {
         </div>
       </div>
 
-      {/* Search modal */}
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
         chatHistory={chatHistory}
-        onSelect={(item) => handleSelectHistory(item)}
+        onSelect={handleSelectHistory}
       />
 
-      <SettingsModal
-  isOpen={isSettingsOpen}
-  onClose={() => setIsSettingsOpen(false)}
-/>
-
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   );
 };
