@@ -19,6 +19,7 @@
  */
 
 import React from "react";
+import { Link } from "react-router-dom";
 import {
   Plus,
   Search,
@@ -137,15 +138,16 @@ const Sidebar = ({
                 <Settings size={18} />
                 <span>Settings</span>
               </button>
-
+              <Link to="">
               <button
                 onClick={onLogout}
                 className="flex items-center gap-3 p-3 rounded-lg text-gray-300 
-                hover:bg-red-800/20 hover:text-red-400 transition"
+               hover:bg-gray-800 transition w-56"
               >
                 <LogOut size={18} />
                 <span>Logout</span>
               </button>
+              </Link>
             </div>
           </>
         )}

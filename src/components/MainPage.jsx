@@ -179,9 +179,9 @@ const MainPage = () => {
 
          <div className="absolute inset-0 z-0">
           <div className="bg-grid-pattern absolute inset-0 opacity-20"></div>
-          <div className="animate-blob absolute left-0 top-0 h-96 w-96 rounded-full bg-blue-700/40 blur-3xl"></div>
-          <div className="animate-blob animation-delay-2000 absolute right-0 top-1/2 h-96 w-96 rounded-full bg-blue-500/40 blur-3xl"></div>
-          <div className="animate-blob animation-delay-4000 absolute bottom-0 left-1/4 h-96 w-96 rounded-full bg-blue-400/40 blur-3xl"></div>
+          <div className="animate-blob absolute left-0 top-0 h-96 w-30  md:w-96 rounded-full bg-blue-700/40 blur-3xl"></div>
+          <div className="animate-blob animation-delay-2000 absolute right-0 top-1/2 h-30 md:h-96 w-30 md:w-96 rounded-full bg-blue-500/40 blur-3xl"></div>
+          <div className="animate-blob animation-delay-4000 absolute bottom-0 left-1/4 h-96 w-30 md:w-96 rounded-full bg-blue-400/40 blur-3xl"></div>
         </div>
 
         {/* Mobile Toggle Button - ChatGPT style */}

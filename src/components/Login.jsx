@@ -11,6 +11,7 @@
     * - Modification    : 
 **/
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 
 // Reusable Input Component
 const InputField = ({ type, placeholder, value, onChange, error }) => (
@@ -101,8 +102,9 @@ const Login = () => {
             onChange={(e) => setPassword(e.target.value)}
             error={errors.password}
           />
-
+          <Link to="/home-page">
           <PrimaryButton loading={loading}>Login</PrimaryButton>
+          </Link>
         </form>
       </div>
     </div>

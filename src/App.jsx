@@ -12,12 +12,14 @@
 **/
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MainPage from "./components/MainPage";
+import Login from "./components/Login";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<MainPage />} />
+        <Route path="/" element={<Login/>} />
+        <Route path="/home-page" element={<MainPage />} />
       </Routes>
     </BrowserRouter>
   );
