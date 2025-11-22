@@ -12,20 +12,12 @@
 **/
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MainPage from "./components/MainPage";
-import Settings from "./pages/Settings";
-import Library from "./pages/Library";
-import Projects from "./pages/Projects";
-import SearchPage from "./pages/SearchPage";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<MainPage />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/library" element={<Library />} />
-        <Route path="/projects" element={<Projects />} />
-        <Route path="/search" element={<SearchPage />} />
       </Routes>
     </BrowserRouter>
   );
