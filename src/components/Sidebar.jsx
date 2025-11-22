@@ -11,6 +11,8 @@ import {
   MessageSquare,
   X,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen
 } from "lucide-react";
 
 const Sidebar = ({
@@ -30,7 +32,7 @@ const Sidebar = ({
           onClick={() => setIsSidebarOpen(true)}
           className="md:hidden fixed top-4 left-4 z-50 bg-white/10 p-3 rounded-lg border border-white/10 text-white backdrop-blur-lg hover:bg-white/20 transition"
         >
-          <Menu size={22} />
+          <PanelLeftOpen size={22} />
         </button>
       )}
 
@@ -66,7 +68,7 @@ const Sidebar = ({
                 onClick={() => setIsSidebarOpen(false)}
                 className="text-gray-400 hover:text-white transition md:hidden"
               >
-                <X size={22} />
+                <PanelLeftClose size={22} />
               </button>
             </div>
 

@@ -117,10 +117,10 @@ const MainPage = () => {
 
         {/* Mobile Toggle Button - ChatGPT style */}
         <button
-          className="md:hidden fixed top-4 left-4 z-50 rounded-lg bg-blue-600 p-3 text-white shadow-lg"
+          className="md:hidden fixed top-4 left-4 z-50 rounded-lg  text-white shadow-lg"
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         >
-          ☰
+          
         </button>
 
         {/* Main content shifts when sidebar expands (desktop) */}
@@ -132,7 +132,7 @@ const MainPage = () => {
         >
           {/* MAIN AREA */}
           <div
-            className="relative z-10 flex flex-col p-6 md:p-10 transition-all duration-300"
+            className="relative z-10 flex flex-col p-6 md:p-10 mt-30 md:mt-0 transition-all duration-300"
             style={{ width: showPreview ? `calc(100% - ${previewWidth}px)` : "100%" }}
           >
             <div className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center">
