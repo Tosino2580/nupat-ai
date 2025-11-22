@@ -246,7 +246,7 @@ const MainPage = () => {
                 </button>
 
                 <button
-                  onClick={handleGenerateSite}
+                  onClick={handleGenerate}
                   disabled={!prompt.trim() || isGenerating}
                   className="flex-1 rounded-xl bg-blue-600 text-white p-3 hover:bg-blue-500 disabled:opacity-50"
                 >
