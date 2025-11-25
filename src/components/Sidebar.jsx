@@ -77,7 +77,7 @@ const Sidebar = ({
             {/* ============== HEADER ============== */}
             <div className="flex items-center justify-between border-b border-gray-800 p-4">
               <span className="text-lg font-semibold text-white tracking-wide hidden md:block">
-                NonaAI
+                NupatAI
               </span>
 
               <button
