@@ -1,110 +1,134 @@
-/**
-    * @description      : 
-    * @author           : fortu
-    * @group            : 
-    * @created          : 22/11/2025 - 13:48:15
-    * 
-    * MODIFICATION LOG
-    * - Version         : 1.0.0
-    * - Date            : 22/11/2025
-    * - Author          : fortu
-    * - Modification    : 
-**/
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { login } from "../api/nupatAPI";
 
-// Reusable Input Component
-const InputField = ({ type, placeholder, value, onChange, error }) => (
-  <div className="flex flex-col gap-1">
-    <input
-      type={type}
-      placeholder={placeholder}
-      value={value}
-      onChange={onChange}
-      className={`w-full p-3 bg-black/40 border rounded-xl text-blue-100 placeholder-blue-300 focus:outline-none focus:ring-2 backdrop-blur-sm
-        ${error ? 'border-red-500/60 focus:ring-red-500/60' : 'border-blue-600/40 focus:ring-blue-500/60'}`}
-      required
-    />
-    {error && <span className="text-sm text-red-400">{error}</span>}
-  </div>
-);
+const Login = ({ setShowRegister }) => { // <-- receive setShowRegister
+  const navigate = useNavigate();
 
-// Reusable Button
-const PrimaryButton = ({ loading, children }) => (
-  <button
-    type="submit"
-    disabled={loading}
-    className={`w-full px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg text-white bg-gradient-to-r
-      ${loading
-        ? 'from-blue-800 to-blue-600 cursor-not-allowed opacity-70'
-        : 'from-blue-700 to-blue-500 hover:from-blue-600 hover:to-blue-400 hover:shadow-blue-500/30'}`}
-  >
-    {loading ? "Loading..." : children}
-  </button>
-);
-
-const Login = () => {
-  const [phoneOrEmail, setPhoneOrEmail] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
 
-  const validate = () => {
-    let temp = {};
-    if (!phoneOrEmail.trim()) temp.phoneOrEmail = "This field is required";
-    if (!password.trim()) temp.password = "Password is required";
-    return temp;
-  };
-
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    const validationErrors = validate();
-    setErrors(validationErrors);
-    if (Object.keys(validationErrors).length > 0) return;
-
+    setError("");
     setLoading(true);
 
-    setTimeout(() => {
-      localStorage.setItem("userToken", "fakeToken123");
-      window.location.reload();
-    }, 1000);
+    try {
+      const res = await login({ email, password });
+
+      if (!res.access_token) {
+        setError("Invalid login details.");
+        setLoading(false);
+        return;
+      }
+
+      // Save token
+      localStorage.setItem("token", res.access_token);
+
+      // Redirect to home page
+      navigate("/home-page");
+
+    } catch (err) {
+      console.error(err);
+
+      if (err.message) {
+        try {
+          const parsed = JSON.parse(err.message);
+          if (Array.isArray(parsed)) {
+            setError(parsed.map(e => e.msg).join(" | "));
+          } else {
+            setError(err.message);
+          }
+        } catch {
+          setError(err.message || "Something went wrong.");
+        }
+      } else {
+        setError("Something went wrong.");
+      }
+    }
+
+    setLoading(false);
   };
 
   return (
-    <div className="font-montserrat relative flex min-h-screen items-center justify-center overflow-hidden bg-black">
+    <div className="main-page-bg min-h-screen relative flex items-center justify-center font-montserrat overflow-hidden">
+
       {/* Background */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,theme(colors.blue.600)_0%,theme(colors.blue.900)_100%)] opacity-20"></div>
-
-        <div className="animate-blob absolute left-0 top-0 h-96 w-96 rounded-full bg-blue-700/40 blur-3xl"></div>
-        <div className="animate-blob animation-delay-2000 absolute right-0 top-1/2 h-96 w-96 rounded-full bg-blue-500/40 blur-3xl"></div>
-        <div className="animate-blob animation-delay-4000 absolute bottom-0 left-1/4 h-96 w-96 rounded-full bg-blue-400/40 blur-3xl"></div>
+        <div className="absolute inset-0 bg-grid-pattern opacity-30"></div>
+        <div className="absolute top-0 left-0 w-96 h-96 bg-purple-900/50 rounded-full blur-3xl animate-blob"></div>
+        <div className="absolute top-1/2 right-0 w-96 h-96 bg-pink-900/50 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-blue-900/50 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
-      {/* Login Card */}
-      <div className="relative z-10 w-full max-w-md rounded-2xl border border-blue-700/40 bg-black/40 p-8 shadow-2xl backdrop-blur-xl">
-        <h1 className="mb-4 text-center text-4xl font-bold text-blue-100">Welcome Back</h1>
-        <p className="mb-8 text-center text-blue-300">Login to continue</p>
+      {/* Login Form */}
+      <div className="relative z-10 w-full max-w-md">
+        <form
+          onSubmit={handleLogin}
+          className="flex flex-col justify-center p-8 bg-black/30 backdrop-blur-md rounded-2xl border border-gray-800"
+        >
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 bg-purple-500/10 px-4 py-2 rounded-full border border-purple-500/20 mb-6">
+              <Sparkles className="w-4 h-4 text-purple-400" />
+              <span className="text-purple-300 text-sm font-medium">Welcome Back</span>
+            </div>
+            <h1 className="text-4xl font-bold text-white">Sign In</h1>
+            <p className="text-gray-400 mt-2">Enter your account to continue.</p>
+          </div>
 
-        <form onSubmit={handleLogin} className="flex flex-col gap-6">
-          <InputField
-            type="text"
-            placeholder="Phone or Email"
-            value={phoneOrEmail}
-            onChange={(e) => setPhoneOrEmail(e.target.value)}
-            error={errors.phoneOrEmail}
-          />
+          {error && (
+            <div className="bg-red-500 text-white p-3 rounded-xl mb-4 text-center">
+              {error}
+            </div>
+          )}
 
-          <InputField
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            error={errors.password}
-          />
-          <Link to="/home-page">
-          <PrimaryButton loading={loading}>Login</PrimaryButton>
-          </Link>
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
+              <input
+                type="email"
+                className="w-full p-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-400"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
+              <input
+                type="password"
+                className="w-full p-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-400"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full mt-8 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-medium hover:from-purple-500 hover:to-pink-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? "Signing in..." : "Sign In"}
+          </button>
+
+          <div className="text-center text-gray-400 mt-6 text-sm">
+            Don't have an account?
+            <button
+              type="button"
+              onClick={() => setShowRegister(true)} // <-- switch to register
+              className="text-purple-400 ml-1 hover:underline"
+            >
+              Create Account
+            </button>
+          </div>
         </form>
       </div>
     </div>
