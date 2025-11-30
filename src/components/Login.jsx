@@ -3,7 +3,7 @@ import { Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../api/nupatAPI";
 
-const Login = ({ setShowRegister }) => { // <-- receive setShowRegister
+const Login = ({ setShowRegister }) => {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -19,16 +19,23 @@ const Login = ({ setShowRegister }) => { // <-- receive setShowRegister
     try {
       const res = await login({ email, password });
 
-      if (!res.access_token) {
+      // Adjust this if your backend uses a different key
+      const token = res.access_token || res.token;
+      if (!token) {
         setError("Invalid login details.");
         setLoading(false);
         return;
       }
 
-      // Save token
-      localStorage.setItem("token", res.access_token);
+      // Save token in localStorage for MainPage usage
+      localStorage.setItem("token", token);
 
-      // Redirect to home page
+      // Optional: save user info if needed
+      if (res.user) {
+        localStorage.setItem("user", JSON.stringify(res.user));
+      }
+
+      // Redirect to MainPage route
       navigate("/home-page");
 
     } catch (err) {
@@ -123,7 +130,7 @@ const Login = ({ setShowRegister }) => { // <-- receive setShowRegister
             Don't have an account?
             <button
               type="button"
-              onClick={() => setShowRegister(true)} // <-- switch to register
+              onClick={() => setShowRegister(true)}
               className="text-purple-400 ml-1 hover:underline"
             >
               Create Account

@@ -112,14 +112,14 @@ export async function deleteChat(token, chatId) {
 
 // for the messages
 
-export async function sendMessage(token, chatId, message) {
+export async function sendMessage(token, chatId, content) {
   const res = await fetch(`${BASE_URL}/api/v1/chats/${chatId}/messages`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ content }),
   });
   return handleResponse(res);
 }

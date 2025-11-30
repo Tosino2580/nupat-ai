@@ -1,21 +1,5 @@
 /**
-    * @description      : 
-    * @author           : fortu
-    * @group            : 
-    * @created          : 22/11/2025 - 17:13:11
-    * 
-    * MODIFICATION LOG
-    * - Version         : 1.0.0
-    * - Date            : 22/11/2025
-    * - Author          : fortu
-    * - Modification    : 
-**/
-/**
- * Clean Sidebar Component (FINAL)
- * - Mobile + Desktop
- * - No routing, no navigate()
- * - Uses callback props only
- * - Works with modals for Search + Settings
+ * Sidebar Component (Chat App - Backend Connected)
  */
 
 import React from "react";
@@ -34,26 +18,27 @@ const Sidebar = ({
   isSidebarOpen,
   setIsSidebarOpen,
   chatHistory = [],
+  activeChat,
+  setActiveChat,
   onNewChat,
+  isCreating,
   onOpenSearch,
-  onSelectHistory,
   onOpenSettings,
   onLogout,
 }) => {
   return (
     <>
-      {/* ============== MOBILE HAMBURGER (when closed) ============== */}
+      {/* ----- Mobile Hamburger ----- */}
       {!isSidebarOpen && (
         <button
           onClick={() => setIsSidebarOpen(true)}
-          className="md:hidden fixed top-4 left-4 z-50 bg-white/10 p-3 rounded-lg 
-          border border-white/10 text-white backdrop-blur-lg hover:bg-white/20 transition"
+          className="md:hidden fixed top-4 left-4 z-50 bg-white/10 p-3 rounded-lg border border-white/10 text-white backdrop-blur-lg hover:bg-white/20 transition"
         >
           <PanelLeftOpen size={22} />
         </button>
       )}
 
-      {/* ============== MOBILE BACKDROP ============== */}
+      {/* ----- Mobile Backdrop ----- */}
       {isSidebarOpen && (
         <div
           onClick={() => setIsSidebarOpen(false)}
@@ -61,7 +46,7 @@ const Sidebar = ({
         ></div>
       )}
 
-      {/* ============== SIDEBAR ============== */}
+      {/* ----- Sidebar Panel ----- */}
       <aside
         className={`
           fixed md:static left-0 top-0 h-screen z-40 overflow-hidden
@@ -71,15 +56,13 @@ const Sidebar = ({
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
       >
-        {/* Content is ONLY rendered when open */}
         {isSidebarOpen && (
           <>
-            {/* ============== HEADER ============== */}
+            {/* Header */}
             <div className="flex items-center justify-between border-b border-gray-800 p-4">
               <span className="text-lg font-semibold text-white tracking-wide hidden md:block">
                 NupatAI
               </span>
-
               <button
                 onClick={() => setIsSidebarOpen(false)}
                 className="text-gray-400 hover:text-white transition md:hidden"
@@ -88,12 +71,12 @@ const Sidebar = ({
               </button>
             </div>
 
-            {/* ============== MAIN BUTTONS ============== */}
+            {/* Main Buttons */}
             <div className="p-4 flex flex-col gap-3">
               <button
                 onClick={onNewChat}
-                className="flex items-center gap-3 p-3 rounded-lg bg-blue-600/20 
-                hover:bg-blue-600/30 border border-blue-600/20 text-white transition"
+                disabled={isCreating}
+                className="flex items-center gap-3 p-3 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 border border-blue-600/20 text-white transition disabled:opacity-50"
               >
                 <Plus size={19} />
                 <span>New Chat</span>
@@ -108,28 +91,32 @@ const Sidebar = ({
               </button>
             </div>
 
-            {/* ============== CHAT HISTORY ============== */}
+            {/* Chat History */}
             <div className="flex-1 px-3 overflow-y-auto custom-scroll space-y-1">
               <div className="text-xs text-gray-500 px-1 mb-2">History</div>
 
               {chatHistory.length === 0 ? (
                 <div className="text-gray-500 text-sm px-2">No history yet</div>
               ) : (
-                chatHistory.map((item) => (
+                chatHistory.map((chat) => (
                   <button
-                    key={item.id}
-                    onClick={() => onSelectHistory(item)}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg text-gray-300 
-                    hover:bg-gray-800/50 hover:text-white transition text-sm"
+                    key={chat.id}
+                    onClick={() => setActiveChat({ ...chat, messages: [] })}
+                    className={`
+                      w-full flex items-center gap-3 p-3 rounded-lg text-sm transition
+                      ${activeChat?.id === chat.id
+                        ? "bg-blue-600/50 text-white"
+                        : "text-gray-300 hover:bg-gray-800/50 hover:text-white"}
+                    `}
                   >
                     <MessageSquare size={18} />
-                    <span className="truncate">{item.summary}</span>
+                    <span className="truncate">{chat.title}</span>
                   </button>
                 ))
               )}
             </div>
 
-            {/* ============== FOOTER ============== */}
+            {/* Footer */}
             <div className="p-4 border-t border-gray-800 flex flex-col gap-3">
               <button
                 onClick={onOpenSettings}
@@ -139,14 +126,13 @@ const Sidebar = ({
                 <span>Settings</span>
               </button>
               <Link to="">
-              <button
-                onClick={onLogout}
-                className="flex items-center gap-3 p-3 rounded-lg text-gray-300 
-               hover:bg-gray-800 transition w-56"
-              >
-                <LogOut size={18} />
-                <span>Logout</span>
-              </button>
+                <button
+                  onClick={onLogout}
+                  className="flex items-center gap-3 p-3 rounded-lg text-gray-300 hover:bg-gray-800 transition"
+                >
+                  <LogOut size={18} />
+                  <span>Logout</span>
+                </button>
               </Link>
             </div>
           </>
