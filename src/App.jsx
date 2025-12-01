@@ -6,12 +6,12 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* After login */}
+        <Route path="/" element={<MainPage />} />
 
         {/* All authentication (login + register switching) */}
-        <Route path="/" element={<AuthPage />} />
+        <Route path="/auth" element={<AuthPage />} />
 
-        {/* After login */}
-        <Route path="/home-page" element={<MainPage />} />
 
       </Routes>
     </BrowserRouter>
