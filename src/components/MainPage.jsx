@@ -8,16 +8,16 @@ import Sidebar from './Sidebar';
 import SearchModal from './SearchModal';
 import SettingsModal from './SettingsModal';
 import { getUserChats, getMessages, createChat, sendMessage } from '../api/nupatAPI';
-import {Link} from "react-router-dom"
+import { Link } from "react-router-dom";
 
 const STORAGE_KEY = 'nonaai_chat_history_v1';
 
 const MainPage = () => {
   // UI state
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // hidden on first load
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
+  const [isInputDocked, setIsInputDocked] = useState(false); // fixed undefined
   const [prompt, setPrompt] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [generatedSite, setGeneratedSite] = useState('');
@@ -34,7 +34,7 @@ const MainPage = () => {
       return [];
     }
   });
-  const [activeChat, setActiveChat] = useState(null); // { id, title, messages: [] }
+  const [activeChat, setActiveChat] = useState(null);
   const [messageInput, setMessageInput] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -64,7 +64,6 @@ const MainPage = () => {
   // Auto-scroll to bottom when activeChat messages change
   useEffect(() => {
     if (!messagesRef.current) return;
-    // small timeout to ensure DOM rendered
     const t = setTimeout(() => {
       try {
         messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
@@ -97,7 +96,6 @@ const MainPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Load messages helper
   const loadMessagesForChat = async (chatId, tokenArg) => {
     const token = tokenArg || getToken();
     if (!token || !chatId) return;
@@ -114,44 +112,27 @@ const MainPage = () => {
     }
   };
 
-  // ----- Create new chat -----
   const handleNewChat = async () => {
-  console.log("New chat clicked!");
-  const token = getToken();
-  if (!token) {
-    console.warn("No token found for new chat");
-    return;
-  }
+    console.log("New chat clicked!");
+    const token = getToken();
+    if (!token) return;
 
-  setIsGenerating(true);
-  try {
-    const newChat = await createChat(token, "New Chat");
-    console.log("API returned new chat:", newChat);
+    setIsGenerating(true);
+    try {
+      const newChat = await createChat(token, "New Chat");
+      const chatObj = newChat?.id ? newChat : newChat?.chat || newChat;
+      const nextHistory = [chatObj, ...chatHistory].slice(0, 100);
+      persistHistory(nextHistory);
+      setActiveChat({ ...chatObj, messages: [] });
+      setMessageInput("");
+      setIsSidebarOpen(true);
+    } catch (err) {
+      console.error("Failed to create new chat:", err);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
-    // normalize chat object
-    const chatObj = newChat?.id ? newChat : newChat?.chat || newChat;
-    console.log("Processed chat object:", chatObj);
-
-    // 3️⃣ Add the new chat to history immediately
-    const nextHistory = [chatObj, ...chatHistory].slice(0, 100);
-    persistHistory(nextHistory);
-
-    // 4️⃣ Set as active chat (empty messages)
-    setActiveChat({ ...chatObj, messages: [] });
-    setMessageInput("");
-
-    // Optional: keep sidebar open
-    setIsSidebarOpen(true);
-  } catch (err) {
-    console.error("Failed to create new chat:", err);
-  } finally {
-    setIsGenerating(false);
-  }
-};
-
-
-
-  // Select chat from sidebar
   const handleSelectHistory = async (item) => {
     setActiveChat({ ...item, messages: [] });
     const token = getToken();
@@ -159,99 +140,60 @@ const MainPage = () => {
   };
 
   const handleSend = async (e) => {
-  e?.preventDefault();
+    e?.preventDefault();
+    const content = (messageInput || prompt).trim();
+    if (!content) return;
+    const token = getToken();
+    if (!token) return;
 
-  const content = messageInput.trim();
-  if (!content) return;
+    setIsGenerating(true);
+    try {
+      let chatId = activeChat?.id;
 
-  const token = getToken();
-  if (!token) {
-    console.warn("No token available for send");
-    return;
-  }
+      if (!chatId) {
+        const newChat = await createChat(token, "New Chat");
+        const chatObj = newChat?.id ? newChat : newChat?.chat || newChat;
+        setActiveChat({ ...chatObj, messages: [] });
+        chatId = chatObj.id;
+        const nextHistory = [chatObj, ...chatHistory].slice(0, 100);
+        persistHistory(nextHistory);
+      }
 
-  setIsGenerating(true);
-
-  try {
-    let chatId = activeChat?.id;
-
-    // If no active chat, create one automatically
-    if (!chatId) {
-      const newChat = await createChat(token, "New Chat");
-      const chatObj = newChat?.id ? newChat : newChat?.chat || newChat;
-      setActiveChat({ ...chatObj, messages: [] });
-      chatId = chatObj.id;
-
-      // Also add to history
-      const nextHistory = [chatObj, ...chatHistory].slice(0, 100);
-      persistHistory(nextHistory);
-    }
-
-    // Send message to backend
-    const res = await sendMessage(token, chatId, content);
-
-    // Normalize user/assistant messages
-    const userMsg =
-      res?.user_message || { id: `u-${Date.now()}`, role: "user", content };
-    const assistantMsg =
-      res?.assistant_message || {
+      const res = await sendMessage(token, chatId, content);
+      const userMsg = res?.user_message || { id: `u-${Date.now()}`, role: "user", content };
+      const assistantMsg = res?.assistant_message || {
         id: `a-${Date.now()}`,
         role: "assistant",
-        content:
-          (res && (res.message || res.response || res.text)) ||
-          "No response from AI",
+        content: (res && (res.message || res.response || res.text)) || "No response from AI",
       };
 
-    // Append messages to activeChat
-    setActiveChat((prev) => {
-      const prevMessages = prev?.messages ?? [];
-      const updatedChat = {
-        ...(prev || {}),
-        messages: [...prevMessages, userMsg, assistantMsg],
-        title: res?.chat?.title || prev?.title,
-      };
+      setActiveChat((prev) => {
+        const prevMessages = prev?.messages ?? [];
+        const updatedChat = {
+          ...(prev || {}),
+          messages: [...prevMessages, userMsg, assistantMsg],
+          title: res?.chat?.title || prev?.title,
+        };
 
-      //  ✅ Update chatHistory immediately
-      const existingIndex = chatHistory.findIndex((c) => c.id === updatedChat.id);
-      let nextHistory = [...chatHistory];
-      if (existingIndex !== -1) {
-        nextHistory[existingIndex] = { ...updatedChat };
-      } else {
-        nextHistory.unshift({ ...updatedChat });
-      }
-      nextHistory = nextHistory.slice(0, 100);
-      persistHistory(nextHistory);
+        const existingIndex = chatHistory.findIndex((c) => c.id === updatedChat.id);
+        let nextHistory = [...chatHistory];
+        if (existingIndex !== -1) {
+          nextHistory[existingIndex] = { ...updatedChat };
+        } else {
+          nextHistory.unshift({ ...updatedChat });
+        }
+        persistHistory(nextHistory.slice(0, 100));
 
-      return updatedChat;
-    });
+        return updatedChat;
+      });
 
-        setMessageInput("");
-      } catch (err) {
-        console.error("Send message error:", err);
-      } finally {
-        setIsGenerating(false);
-      }
-      return;
-    }
-
-    // fallback preview generator
-    if (!prompt.trim()) return;
-    setIsGenerating(true);
-    setShowPreview(true);
-    setTimeout(() => {
-      const html = `<html><body><h1>Result</h1><p>${prompt}</p></body></html>`;
-      setGeneratedSite(html);
-      const item = {
-        id: Date.now().toString(),
-        summary: summarize(prompt),
-        prompt,
-        generatedSite: html,
-        ts: Date.now(),
-      };
-      persistHistory([item, ...chatHistory].slice(0, 100));
+      setMessageInput("");
       setPrompt("");
+    } catch (err) {
+      console.error("Send message error:", err);
+    } finally {
       setIsGenerating(false);
-    }, 1100);
+    }
   };
 
   const handleLogout = () => {
@@ -259,6 +201,10 @@ const MainPage = () => {
     localStorage.removeItem('userToken');
     window.location.reload();
   };
+
+  // Dummy mouse down handler for resizing
+  // eslint-disable-next-line no-unused-vars
+  const handleMouseDown = (e) => { /* implement resizing later */ };
 
   return (
     <div className="min-h-screen flex bg-black font-montserrat">
@@ -278,7 +224,6 @@ const MainPage = () => {
         onLogout={handleLogout}
       />
 
-      {/* Main content */}
       <div className="relative flex flex-1">
         {/* Background animations */}
         <div className="absolute inset-0 z-0">
@@ -311,10 +256,10 @@ const MainPage = () => {
                   <p className="mx-auto max-w-md text-gray-300 text-sm md:text-lg">
                     Your AI assistant is here to help you think, create, plan, and explore ideas instantly.
                   </p>
-              </div>
-            )}
+                </div>
+              )}
 
-              {/* Active chat messages */}
+              {/* Messages or input */}
               {activeChat ? (
                 <>
                   <div className="mb-4 w-full flex items-center justify-between">
@@ -322,7 +267,7 @@ const MainPage = () => {
                     <div className="text-sm text-gray-400">{activeChat.messages?.length ?? 0} messages</div>
                   </div>
 
-                  <div className="flex-1 w-full overflow-y-auto p-2 space-y-3">
+                  <div ref={messagesRef} className="flex-1 w-full overflow-y-auto p-2 space-y-3">
                     {activeChat.messages?.length > 0 ? (
                       activeChat.messages.map((msg) => (
                         <div
@@ -369,12 +314,8 @@ const MainPage = () => {
                   </div>
                 </>
               ) : (
-                // No active chat: show prompt input
-                <div
-                  className={`${
-                    isInputDocked ? "fixed bottom-0 left-0 w-full p-4 border-gray-800 z-50 md:ml-20" : "relative mt-4"
-                  } transition-all duration-300`}
-                >
+                // No active chat
+                <div className="relative mt-4 transition-all duration-300">
                   <div className="relative w-full max-w-xl mx-auto">
                     <textarea
                       value={prompt}
